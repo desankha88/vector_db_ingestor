@@ -1,0 +1,7 @@
+chromadb
+PyPDF2
+PyMuPDF
+onnxruntime
+sentence-transformers
+transformers
+torch
