@@ -320,7 +320,7 @@ def demonstrate_rag_workflow(ingester: PDFToChromaIngester):
     # 1. Ingest documents
     print("=== INGESTING DOCUMENTS ===")
     results = ingester.ingest_directory(
-        "/content/",
+        PDF_DIRECTORY_PATH,
         metadata={"category": "academic", "project": "rag_demo"}
     )
     
