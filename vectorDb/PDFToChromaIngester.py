@@ -7,12 +7,14 @@ import PyPDF2
 import fitz  # PyMuPDF
 from pathlib import Path
 import logging
+import json
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
-PDF_DIRECTORY_PATH = "/content/"
+PDF_DIRECTORY_PATH = "../pdf_datasets/"
 
 class PDFToChromaIngester:
     def __init__(self, chroma_db_path: str = "./chroma_db", collection_name: str = "airline_travel_docs"):
@@ -244,6 +246,108 @@ class PDFToChromaIngester:
             logger.error(f"Error getting collection stats: {e}")
             return {}
 
+
+    def search_for_rag(self, query: str, n_results: int = 5, filter_metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Enhanced search specifically designed for RAG applications"""
+        try:
+            # Prepare search parameters
+            search_params = {
+                "query_texts": [query],
+                "n_results": n_results
+            }
+            
+            # Add metadata filtering if provided
+            if filter_metadata:
+                search_params["where"] = filter_metadata
+            
+            results = self.collection.query(**search_params)
+            
+            # Format results for RAG
+            if results and results.get('documents'):
+                formatted_results = []
+                for i, doc in enumerate(results['documents'][0]):
+                    result = {
+                        "content": doc,
+                        "metadata": results['metadatas'][0][i] if results.get('metadatas') else {},
+                        "distance": results['distances'][0][i] if results.get('distances') else None,
+                        "id": results['ids'][0][i] if results.get('ids') else None
+                    }
+                    formatted_results.append(result)
+                
+                return {
+                    "query": query,
+                    "results": formatted_results,
+                    "total_results": len(formatted_results)
+                }
+            
+            return {"query": query, "results": [], "total_results": 0}
+            
+        except Exception as e:
+            logger.error(f"Error searching documents: {e}")
+            return {"query": query, "results": [], "total_results": 0, "error": str(e)}
+        
+    def get_context_for_rag(self, query: str, max_context_length: int = 4000) -> str:
+        """Get formatted context string for RAG LLM input"""
+        search_results = self.search_for_rag(query, n_results=10)
+
+        if not search_results.get("results"):
+            return ""
+        
+        context_parts = []
+        current_length = 0
+
+        for i, result in enumerate(search_results["results"]):
+            content = result["content"]
+            source = result["metadata"].get("filename", "Unknown")
+            chunk_id = result["metadata"].get("chunk_id", f"chunk_{i}")
+
+            # Format the context piece
+            context_piece = f"[Source: {source}, Chunk: {chunk_id}]\n{content}\n"
+
+            # Check if adding this piece would exceed max length
+            if current_length + len(context_piece) > max_context_length:
+                break
+
+            context_parts.append(context_piece)
+            current_length += len(context_piece)
+
+        return "\n---\n".join(context_parts)
+
+
+# Example RAG workflow
+def demonstrate_rag_workflow(ingester: PDFToChromaIngester):
+
+    # 1. Ingest documents
+    print("=== INGESTING DOCUMENTS ===")
+    results = ingester.ingest_directory(
+        "/content/",
+        metadata={"category": "academic", "project": "rag_demo"}
+    )
+    
+    # 2. Get collection stats
+    print("\n=== COLLECTION STATS ===")
+    stats = ingester.get_collection_stats()
+    print(json.dumps(stats, indent=2))
+    
+    # 3. Perform RAG search
+    print("\n=== RAG SEARCH DEMO ===")
+    query = "What is the process for refunding a ticket?"
+    
+    # Get structured results
+    search_results = ingester.search_for_rag(query, n_results=3)
+    print(f"Query: {search_results['query']}")
+    print(f"Found {search_results['total_results']} results")
+    
+    # Get formatted context for LLM
+    context = ingester.get_context_for_rag(query, max_context_length=2000)
+    print(f"\nFormatted context for LLM ({len(context)} chars):")
+    print(context[:500] + "..." if len(context) > 500 else context)
+    
+    # 4. This context can now be fed to our LLM
+    # llm_response = your_llm_function(query, context)
+
+    return context
+
 # Usage example
 if __name__ == "__main__":
     print("Starting PDF ingestion process...")
@@ -294,3 +398,8 @@ if __name__ == "__main__":
             print("No search results found")
     
     print("\nPDFToChromaIngester completed successfully!")
+
+    context = demonstrate_rag_workflow(ingester)
+
+    print("\nRAG workflow demonstration completed.")
+    print(f"Context length: {len(context)} characters")
