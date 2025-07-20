@@ -143,9 +143,9 @@ class PDFToChromaIngester:
                 logger.info(f"Adding {len(documents_list)} documents to ChromaDB")
                 assert len(documents_list) == len(metadatas_list) == len(ids_list)
                 self.collection.add(
-                    documents=documents_list[0:2],
-                    metadatas=metadatas_list[0:2],
-                    ids=ids_list[0:2]
+                    documents=documents_list,
+                    metadatas=metadatas_list,
+                    ids=ids_list
                 )
                 logger.info("Successfully added documents to collection.")
             logger.info(f"Successfully ingested {pdf_path} with {len(chunks)} chunks")

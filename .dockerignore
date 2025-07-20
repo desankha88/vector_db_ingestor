@@ -1,0 +1,11 @@
+.git
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+# Any other local development files or large data that are NOT needed inside the image
+# For example, if you have a "temp/" or "output/" directory:
+# temp/
+# output/
