@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 PDF_DIRECTORY_PATH = "../pdf_datasets/"
 
-api_key='ck-BfZb1xvQNgt33pwFTLKpt8dsQtB7pFR2Ejde65LCbQrn'
-tenant='0849504b-ced7-414e-96ec-502f8d43f5ea'
+api_key_txt='dummy_api_key'  # Replace with your actual API key
+tenant_txt='dummy_tenant_id'  # Replace with your actual tenant ID
 
 class PDFToChromaIngester:
     def __init__(self, chroma_db_path: str = "./chroma_db", collection_name: str = "airline_travel_docs"):
@@ -27,8 +27,8 @@ class PDFToChromaIngester:
         # Initialize ChromaDB client
         #self.client = chromadb.PersistentClient(path=chroma_db_path)
 
-        self.client = chromadb.CloudClient(api_key='ck-BfZb1xvQNgt33pwFTLKpt8dsQtB7pFR2Ejde65LCbQrn',
-                                           tenant='0849504b-ced7-414e-96ec-502f8d43f5ea',
+        self.client = chromadb.CloudClient(api_key=api_key_txt,
+                                           tenant=tenant_txt,
                                            database='skyline_airways_vector')
         
 

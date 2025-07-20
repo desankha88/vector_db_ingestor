@@ -7,6 +7,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 max_context_length = 2000
 my_collection_name="airline_travel_docs"
+api_key_txt='dummy_api_key'  # Replace with your actual API key
+tenant_txt='dummy_tenant_id'
 
 def demonstrate_rag_workflow(  query_txt : str , filter_metadata: Dict[str, Any] = None):
     """Demonstrate RAG workflow with a sample query"""
@@ -14,9 +16,9 @@ def demonstrate_rag_workflow(  query_txt : str , filter_metadata: Dict[str, Any]
     client = chromadb.HttpClient(
         ssl=True,
         host='api.trychroma.com',
-        tenant='0849504b-ced7-414e-96ec-502f8d43f5ea',
+        tenant=tenant_txt,
         database='skyline_airways_vector',
-        headers={'x-chroma-token': 'ck-4KXhQ4AYZ7eKdJ5nnzv3zMpmLYYmbQhYR6KWCoCwemtw'}
+        headers={'x-chroma-token': api_key_txt}
         )
 
     collection = client.get_collection(name=my_collection_name)
